@@ -400,26 +400,21 @@ QRect ScreenGrabber::screenGeometry(QScreen* screen)
 QPixmap ScreenGrabber::grabScreen(QScreen* screen, bool& ok)
 {
     QPixmap p;
-    QRect geometry = screenGeometry(screen);
 #if defined(Q_OS_UNIX) && !defined(Q_OS_MACOS)
     const QList<QScreen*> screens = QGuiApplication::screens();
     int screenIndex = screens.indexOf(screen);
 
     p = grabEntireDesktop(ok, screenIndex);
+#elif defined(Q_OS_WIN)
+    p = WindowsHdrCapture::grabScreen(screen);
+    if (p.isNull()) {
+        // Qt applies the screen's desktop offset for a whole-screen grab.
+        p = screen->grabWindow(0);
+    }
+    ok = !p.isNull();
 #else
     ok = true;
-#if defined(Q_OS_WIN)
-    // The HDR capture always covers the whole monitor. grabWindow() takes
-    // coordinates relative to the screen, so this request covers the whole
-    // monitor only when the screen's geometry starts at (0,0); other screens
-    // keep the existing GDI request unchanged.
-    if (geometry.topLeft().isNull()) {
-        QPixmap hdrPixmap = WindowsHdrCapture::grabScreen(screen);
-        if (!hdrPixmap.isNull()) {
-            return hdrPixmap;
-        }
-    }
-#endif
+    const QRect geometry = screenGeometry(screen);
     return screen->grabWindow(
       0, geometry.x(), geometry.y(), geometry.width(), geometry.height());
 #endif
