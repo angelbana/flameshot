@@ -37,6 +37,8 @@ public slots:
     void show();
 
 private:
+    class Backdrop;
+
     QVector<QPoint> horizontalPoints(const QPoint& center,
                                      const int elements,
                                      const bool leftToRight) const;
@@ -49,6 +51,8 @@ private:
     QRect intersectWithAreas(const QRect& rect);
 
     QVector<CaptureToolButton*> m_vectorButtons;
+    QVector<QRect> m_buttonGroups;
+    Backdrop* m_backdrop = nullptr;
 
     QVector<QRect> m_screenRegions;
 
@@ -75,5 +79,5 @@ private:
     void positionButtonsInside(int index);
     void ensureSelectionMinimumSize();
     void moveButtonsToPoints(const QVector<QPoint>& points, int& index);
-    void adjustHorizontalCenter(QPoint& center);
+    void adjustHorizontalCenter(QPoint& center, int elements) const;
 };

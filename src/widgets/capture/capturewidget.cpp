@@ -298,6 +298,8 @@ CaptureWidget::CaptureWidget(const CaptureRequest& req,
 
     initQuitPrompt();
 
+    setFocusPolicy(Qt::StrongFocus);
+    setFocus(Qt::OtherFocusReason);
     updateCursor();
 }
 
@@ -616,7 +618,7 @@ void CaptureWidget::uncheckActiveTool()
 {
     // uncheck active tool
     m_panel->setToolWidget(nullptr);
-    m_activeButton->setColor(m_uiColor);
+    m_activeButton->setSelected(false);
     updateTool(activeButtonTool());
     m_activeButton = nullptr;
     releaseActiveTool();
@@ -1423,15 +1425,15 @@ void CaptureWidget::setState(CaptureToolButton* b)
     if (b->tool()->isSelectable()) {
         if (m_activeButton != b) {
             if (m_activeButton) {
-                m_activeButton->setColor(m_uiColor);
+                m_activeButton->setSelected(false);
             }
             m_activeButton = b;
-            m_activeButton->setColor(m_contrastUiColor);
+            m_activeButton->setSelected(true, m_contrastUiColor);
             m_panel->setActiveLayer(-1);
             m_panel->setToolWidget(b->tool()->configurationWidget());
         } else if (m_activeButton) {
             m_panel->clearToolWidget();
-            m_activeButton->setColor(m_uiColor);
+            m_activeButton->setSelected(false);
             m_activeButton = nullptr;
         }
         m_context.toolSize = ConfigHandler().toolSize(activeButtonToolType());

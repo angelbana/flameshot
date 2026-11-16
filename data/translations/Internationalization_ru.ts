@@ -215,6 +215,17 @@
     </message>
 </context>
 <context>
+    <name>CaptureToolButton</name>
+    <message>
+        <source>Left double-click</source>
+        <translation>Двойной щелчок левой кнопкой</translation>
+    </message>
+    <message>
+        <source>%1 or %2</source>
+        <translation>%1 или %2</translation>
+    </message>
+</context>
+<context>
     <name>CaptureWidget</name>
     <message>
         <source>Unable to capture screen</source>
@@ -1802,6 +1813,18 @@ Please solve them manually in the configuration file.</source>
 </context>
 <context>
     <name>ImgurUploader</name>
+    <message>
+        <source>Imgur temporarily rejected the upload (HTTP 429). Try again later.</source>
+        <translation>Imgur временно отклонил загрузку (HTTP 429). Повторите попытку позже.</translation>
+    </message>
+    <message>
+        <source>Could not connect to Imgur.</source>
+        <translation>Не удалось подключиться к Imgur.</translation>
+    </message>
+    <message>
+        <source>Imgur upload failed (HTTP %1).</source>
+        <translation>Не удалось загрузить изображение в Imgur (HTTP %1).</translation>
+    </message>
     <message>
         <source>Upload to Imgur</source>
         <translation type="vanished">Загрузить в Imgur</translation>

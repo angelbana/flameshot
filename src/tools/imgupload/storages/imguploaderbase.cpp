@@ -48,6 +48,8 @@ ImgUploaderBase::ImgUploaderBase(const QPixmap& capture, QWidget* parent)
     m_spinner->start();
 
     m_infoLabel = new QLabel(tr("Uploading Image"));
+    m_infoLabel->setTextFormat(Qt::PlainText);
+    m_infoLabel->setWordWrap(true);
     m_infoLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
     m_infoLabel->setCursor(QCursor(Qt::IBeamCursor));
 

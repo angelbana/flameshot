@@ -10,13 +10,18 @@
 #include <QVector>
 
 class QWidget;
-class QPropertyAnimation;
-
 class CaptureToolButton : public CaptureButton
 {
     Q_OBJECT
 
 public:
+    enum class Group
+    {
+        Annotation,
+        History,
+        Output
+    };
+
     explicit CaptureToolButton(const CaptureTool::Type,
                                QWidget* parent = nullptr);
     ~CaptureToolButton();
@@ -28,12 +33,15 @@ public:
     QString description() const;
     QIcon icon() const;
     CaptureTool* tool() const;
+    Group group() const;
 
     void setColor(const QColor& c);
-    void animatedShow();
+    void setSelected(bool selected, const QColor& color = {});
 
 protected:
+    bool event(QEvent* e) override;
     void mousePressEvent(QMouseEvent* e) override;
+    void nextCheckState() override;
     static QList<CaptureTool::Type> iterableButtonTypes;
 
     CaptureTool* m_tool;
@@ -46,10 +54,9 @@ private:
     CaptureToolButton(QWidget* parent = nullptr);
     CaptureTool::Type m_buttonType;
 
-    QPropertyAnimation* m_emergeAnimation;
-
-    static QColor m_mainColor;
+    QColor m_color;
+    QColor m_selectedColor;
 
     void initButton();
-    void updateIcon();
+    void updateAppearance();
 };

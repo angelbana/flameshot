@@ -18,6 +18,7 @@
 #include <QNetworkRequest>
 #include <QShortcut>
 #include <QUrlQuery>
+#include <QVariant>
 
 ImgurUploader::ImgurUploader(const QPixmap& capture, QWidget* parent)
   : ImgUploaderBase(capture, parent)
@@ -56,20 +57,42 @@ void ImgurUploader::handleReply(QNetworkReply* reply)
 
         emit uploadOk(imageURL());
     } else {
-        QString status;
-        if (json.contains(QStringLiteral("errors")) &&
-            json.value(QStringLiteral("errors")).isArray()) {
-            QJsonArray errorsArray =
-              json.value(QStringLiteral("errors")).toArray();
-            if (!errorsArray.isEmpty() && errorsArray.at(0).isObject()) {
-                QJsonObject errorObj = errorsArray.at(0).toObject();
-                status = errorObj.value(QStringLiteral("code")).toString() +
-                         " - " +
-                         errorObj.value(QStringLiteral("status")).toString();
+        const int status =
+          reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+        if (status == 429) {
+            setInfoLabelText(
+              tr("Imgur temporarily rejected the upload (HTTP 429). "
+                 "Try again later."));
+        } else if (status == 0) {
+            setInfoLabelText(tr("Could not connect to Imgur.") + "\n" +
+                             reply->errorString());
+        } else {
+            QString message = tr("Imgur upload failed (HTTP %1).").arg(status);
+            QString detail = json.value(QStringLiteral("data"))
+                               .toObject()
+                               .value(QStringLiteral("error"))
+                               .toString()
+                               .trimmed();
+            if (detail.isEmpty()) {
+                const QJsonArray errors =
+                  json.value(QStringLiteral("errors")).toArray();
+                if (!errors.isEmpty()) {
+                    const QJsonObject error = errors.first().toObject();
+                    detail = error.value(QStringLiteral("status")).toString();
+                    const QString code = error.value(QStringLiteral("code"))
+                                           .toVariant()
+                                           .toString();
+                    if (!code.isEmpty()) {
+                        detail =
+                          detail.isEmpty() ? code : code + " - " + detail;
+                    }
+                }
             }
+            if (!detail.isEmpty()) {
+                message += "\n" + detail;
+            }
+            setInfoLabelText(message);
         }
-
-        setInfoLabelText(reply->errorString() + "\n" + status);
     }
     new QShortcut(Qt::Key_Escape, this, SLOT(close()));
 }

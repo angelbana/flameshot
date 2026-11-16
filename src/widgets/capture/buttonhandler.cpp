@@ -4,18 +4,54 @@
 #include "buttonhandler.h"
 #include "utils/globalvalues.h"
 
+#include <QPainter>
 #include <QPoint>
 #include <QScreen>
 
-// ButtonHandler is a handler for every active button. It makes easier to
-// manipulate the buttons as a unit.
+class ButtonHandler::Backdrop : public QWidget
+{
+public:
+    explicit Backdrop(QWidget* parent)
+      : QWidget(parent)
+    {
+        setAttribute(Qt::WA_TransparentForMouseEvents);
+    }
+
+    void setGroups(const QVector<QRect>& groups)
+    {
+        m_groups = groups;
+        QRect bounds;
+        for (const QRect& group : m_groups) {
+            bounds = bounds.united(group);
+        }
+        setGeometry(bounds);
+        update();
+    }
+
+protected:
+    void paintEvent(QPaintEvent*) override
+    {
+        QPainter painter(this);
+        painter.setRenderHint(QPainter::Antialiasing);
+        painter.setBrush(QColor("#171B27"));
+        painter.setPen(QColor("#50576B"));
+        painter.translate(-pos());
+        for (const QRect& group : m_groups) {
+            const QRectF shape = QRectF(group).adjusted(0.5, 0.5, -0.5, -0.5);
+            painter.drawRoundedRect(shape, 9, 9);
+        }
+    }
+
+private:
+    QVector<QRect> m_groups;
+};
 
 ButtonHandler::ButtonHandler(const QVector<CaptureToolButton*>& v,
                              QObject* parent)
   : QObject(parent)
 {
-    setButtons(v);
     init();
+    setButtons(v);
 }
 
 ButtonHandler::ButtonHandler(QObject* parent)
@@ -26,6 +62,9 @@ ButtonHandler::ButtonHandler(QObject* parent)
 
 void ButtonHandler::hide()
 {
+    if (m_backdrop) {
+        m_backdrop->hide();
+    }
     for (CaptureToolButton* b : m_vectorButtons) {
         b->hide();
     }
@@ -36,8 +75,9 @@ void ButtonHandler::show()
     if (m_vectorButtons.isEmpty() || m_vectorButtons.first()->isVisible()) {
         return;
     }
+    m_backdrop->show();
     for (CaptureToolButton* b : m_vectorButtons) {
-        b->animatedShow();
+        b->show();
     }
 }
 
@@ -70,6 +110,7 @@ size_t ButtonHandler::size() const
 void ButtonHandler::updatePosition(const QRect& selection)
 {
     resetRegionTrack();
+    m_buttonGroups.clear();
     const int vecLength = m_vectorButtons.size();
     if (vecLength == 0) {
         return;
@@ -116,7 +157,7 @@ void ButtonHandler::updatePosition(const QRect& selection)
             QPoint center = QPoint(m_selection.center().x(),
                                    m_selection.bottom() + m_separator);
             if (addCounter > buttonsPerRow) {
-                adjustHorizontalCenter(center);
+                adjustHorizontalCenter(center, addCounter);
             }
             // ElemIndicator, elemsAtCorners
             QVector<QPoint> positions =
@@ -141,7 +182,7 @@ void ButtonHandler::updatePosition(const QRect& selection)
             QPoint center = QPoint(m_selection.center().x(),
                                    m_selection.top() - m_buttonExtendedSize);
             if (addCounter == 1 + buttonsPerRow) {
-                adjustHorizontalCenter(center);
+                adjustHorizontalCenter(center, addCounter);
             }
             QVector<QPoint> positions =
               horizontalPoints(center, addCounter, false);
@@ -165,22 +206,14 @@ void ButtonHandler::updatePosition(const QRect& selection)
         }
         updateBlockedSides();
     }
+    m_backdrop->setGroups(m_buttonGroups);
 }
 
 int ButtonHandler::calculateShift(int elements, bool reverse) const
 {
-    int shift = 0;
-    if (elements % 2 == 0) {
-        shift = m_buttonExtendedSize * (elements / 2) - (m_separator / 2);
-    } else {
-        shift =
-          m_buttonExtendedSize * ((elements - 1) / 2) + m_buttonBaseSize / 2;
-    }
-    if (!reverse) {
-        shift -= m_buttonBaseSize;
-    }
-
-    return shift;
+    const int span = elements * m_buttonExtendedSize - m_separator;
+    const int leftOffset = (span - 1) / 2;
+    return reverse ? leftOffset : span - leftOffset - m_buttonBaseSize;
 }
 // horizontalPoints is an auxiliary method for the button position computation.
 // starts from a known center and keeps adding elements horizontally
@@ -238,7 +271,9 @@ QRect ButtonHandler::intersectWithAreas(const QRect& rect)
 
 void ButtonHandler::init()
 {
-    m_separator = GlobalValues::buttonBaseSize() / 4;
+    m_buttonBaseSize = GlobalValues::buttonBaseSize();
+    m_separator = m_buttonBaseSize / 4;
+    m_buttonExtendedSize = m_buttonBaseSize + m_separator;
 }
 
 void ButtonHandler::resetRegionTrack()
@@ -319,16 +354,18 @@ void ButtonHandler::ensureSelectionMinimumSize()
     // and redimension the base area to the base size of a single button per
     // side
     if (m_selection.width() < m_buttonBaseSize) {
+        const int missing = m_buttonBaseSize - m_selection.width();
         if (!m_blockedLeft) {
-            m_selection.setX(m_selection.x() -
-                             (m_buttonBaseSize - m_selection.width()) / 2);
+            m_selection.moveLeft(m_selection.left() -
+                                 (m_blockedRight ? missing : missing / 2));
         }
         m_selection.setWidth(m_buttonBaseSize);
     }
     if (m_selection.height() < m_buttonBaseSize) {
+        const int missing = m_buttonBaseSize - m_selection.height();
         if (!m_blockedTop) {
-            m_selection.setY(m_selection.y() -
-                             (m_buttonBaseSize - m_selection.height()) / 2);
+            m_selection.moveTop(m_selection.top() -
+                                (m_blockedBotton ? missing : missing / 2));
         }
         m_selection.setHeight(m_buttonBaseSize);
     }
@@ -337,51 +374,61 @@ void ButtonHandler::ensureSelectionMinimumSize()
 void ButtonHandler::moveButtonsToPoints(const QVector<QPoint>& points,
                                         int& index)
 {
+    const int start = index;
+    const int padding = qMax(1, m_separator / 3);
     for (const QPoint& p : points) {
         auto* button = m_vectorButtons[index];
         button->move(p);
+        const QRect background =
+          button->geometry().adjusted(-padding, -padding, padding, padding);
+        if (index == start ||
+            button->group() != m_vectorButtons[index - 1]->group()) {
+            m_buttonGroups.append(background);
+        } else {
+            m_buttonGroups.last() = m_buttonGroups.last().united(background);
+        }
         ++index;
     }
 }
 
-void ButtonHandler::adjustHorizontalCenter(QPoint& center)
+void ButtonHandler::adjustHorizontalCenter(QPoint& center, int elements) const
 {
+    const int leftOffset = calculateShift(elements, true);
+    const int rightOffset =
+      calculateShift(elements, false) + m_buttonBaseSize - 1;
     if (m_blockedLeft) {
-        center.setX(center.x() + m_buttonExtendedSize / 2);
+        center.setX(qMax(center.x(), m_selection.left() + leftOffset));
     } else if (m_blockedRight) {
-        center.setX(center.x() - m_buttonExtendedSize / 2);
+        center.setX(qMin(center.x(), m_selection.right() - rightOffset));
     }
 }
 
 // setButtons redefines the buttons of the button handler
 void ButtonHandler::setButtons(const QVector<CaptureToolButton*>& v)
 {
-    if (v.isEmpty()) {
-        return;
-    }
+    hide();
 
     for (CaptureToolButton* b : m_vectorButtons) {
         delete (b);
     }
     m_vectorButtons = v;
-    m_buttonBaseSize = GlobalValues::buttonBaseSize();
-    m_buttonExtendedSize = m_buttonBaseSize + m_separator;
+    m_buttonGroups.clear();
+    if (!m_vectorButtons.isEmpty()) {
+        if (!m_backdrop) {
+            m_backdrop = new Backdrop(v.first()->parentWidget());
+        }
+        m_backdrop->stackUnder(v.first());
+    }
 }
 
 bool ButtonHandler::contains(const QPoint& p) const
 {
-    if (m_vectorButtons.isEmpty()) {
-        return false;
+    for (const QRect& group : m_buttonGroups) {
+        if (group.contains(p)) {
+            return true;
+        }
     }
-    QPoint first(m_vectorButtons.first()->pos());
-    QPoint last(m_vectorButtons.last()->pos());
-    bool firstIsTopLeft = (first.x() <= last.x() && first.y() <= last.y());
-    QPoint topLeft = firstIsTopLeft ? first : last;
-    QPoint bottonRight = firstIsTopLeft ? last : first;
-    topLeft += QPoint(-m_separator, -m_separator);
-    bottonRight += QPoint(m_buttonExtendedSize, m_buttonExtendedSize);
-    QRegion r(QRect(topLeft, bottonRight).normalized());
-    return r.contains(p);
+    return false;
 }
 
 void ButtonHandler::updateScreenRegions(const QVector<QRect>& rects)

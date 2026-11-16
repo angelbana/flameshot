@@ -7,23 +7,27 @@
 #include "utils/confighandler.h"
 #include "utils/globalvalues.h"
 
-#include <QApplication>
 #include <QIcon>
+#include <QKeyEvent>
 #include <QMouseEvent>
-#include <QPropertyAnimation>
-#include <QToolTip>
 
-// Button represents a single button of the capture widget, it can enable
-// multiple functionality.
+namespace {
+QColor tint(const QColor& base, const QColor& accent, qreal amount)
+{
+    return QColor::fromRgbF(
+      base.redF() + (accent.redF() - base.redF()) * amount,
+      base.greenF() + (accent.greenF() - base.greenF()) * amount,
+      base.blueF() + (accent.blueF() - base.blueF()) * amount);
+}
+}
 
 CaptureToolButton::CaptureToolButton(const CaptureTool::Type t, QWidget* parent)
   : CaptureButton(parent)
   , m_buttonType(t)
   , m_tool(nullptr)
-  , m_emergeAnimation(nullptr)
 {
     initButton();
-    updateIcon();
+    updateAppearance();
 }
 
 CaptureToolButton::~CaptureToolButton()
@@ -31,10 +35,6 @@ CaptureToolButton::~CaptureToolButton()
     if (m_tool) {
         delete m_tool;
         m_tool = nullptr;
-    }
-    if (m_emergeAnimation) {
-        delete m_emergeAnimation;
-        m_emergeAnimation = nullptr;
     }
 }
 
@@ -46,42 +46,63 @@ void CaptureToolButton::initButton()
     }
     m_tool = ToolFactory().CreateTool(m_buttonType, this);
 
-    resize(GlobalValues::buttonBaseSize(), GlobalValues::buttonBaseSize());
-    setMask(QRegion(QRect(-1,
-                          -1,
-                          GlobalValues::buttonBaseSize() + 2,
-                          GlobalValues::buttonBaseSize() + 2),
-                    QRegion::Ellipse));
+    const int size = GlobalValues::buttonBaseSize();
+    setFixedSize(size, size);
+    setIconSize(QSize(size, size) * 0.56);
+    setGraphicsEffect(nullptr);
+    setFocusPolicy(Qt::TabFocus);
+    setAutoDefault(false);
+    setCheckable(m_tool->isSelectable());
+    connect(this, &QPushButton::clicked, this, [this]() {
+        emit pressedButtonLeftClick(this);
+    });
 
     // Set a tooltip showing a shortcut in parentheses (if there is a shortcut)
     const QString description = m_tool->description();
     setAccessibleName(m_tool->name());
     setAccessibleDescription(description);
-    QString tooltip = description;
     QString shortcut =
       ConfigHandler().shortcut(QVariant::fromValue(m_buttonType).toString());
+    shortcut.replace("Return", "Enter");
     if (m_buttonType == CaptureTool::TYPE_COPY &&
         ConfigHandler().copyOnDoubleClick()) {
-        tooltip += QStringLiteral(" (%1Left Double-Click)")
-                     .arg(shortcut.isEmpty() ? QString() : shortcut + " or ");
-    } else if (!shortcut.isEmpty()) {
-        tooltip += QStringLiteral(" (%1)").arg(shortcut);
+        const QString doubleClick = tr("Left double-click");
+        shortcut = shortcut.isEmpty()
+                     ? doubleClick
+                     : tr("%1 or %2").arg(shortcut, doubleClick);
     }
-    tooltip.replace("Return", "Enter");
-    setToolTip(tooltip);
-
-    m_emergeAnimation = new QPropertyAnimation(this, "size", this);
-    m_emergeAnimation->setEasingCurve(QEasingCurve::InOutQuad);
-    m_emergeAnimation->setDuration(80);
-    m_emergeAnimation->setStartValue(QSize(0, 0));
-    m_emergeAnimation->setEndValue(
-      QSize(GlobalValues::buttonBaseSize(), GlobalValues::buttonBaseSize()));
+    setToolTip(shortcut.isEmpty()
+                 ? description
+                 : QStringLiteral("%1 (%2)").arg(description, shortcut));
 }
 
-void CaptureToolButton::updateIcon()
+void CaptureToolButton::updateAppearance()
 {
-    setIcon(icon());
-    setIconSize(size() * 0.6);
+    const QColor surface("#242838");
+    const QColor accent = m_color.isValid() ? m_color : QColor("#875BC1");
+    const bool primary = m_buttonType == CaptureTool::TYPE_COPY ||
+                         m_buttonType == CaptureTool::TYPE_SAVE ||
+                         m_buttonType == CaptureTool::TYPE_ACCEPT;
+    const QColor selectedAccent =
+      m_selectedColor.isValid() ? m_selectedColor : accent;
+    const QColor background = isChecked() ? tint(surface, selectedAccent, 0.52)
+                              : primary   ? tint(surface, accent, 0.40)
+                                          : surface;
+    const QColor border = isChecked() ? tint(selectedAccent, Qt::white, 0.43)
+                          : primary   ? tint(accent, Qt::white, 0.19)
+                                      : surface;
+    setStyleSheet(
+      QStringLiteral("CaptureToolButton { border: 1px solid %1; "
+                     "border-radius: %2px; padding: 0; background: %3; }"
+                     "CaptureToolButton:hover { background: %4; }"
+                     "CaptureToolButton:pressed { background: %5; }"
+                     "CaptureToolButton:focus { border-color: #F0E5FF; }")
+        .arg(border.name(),
+             QString::number(width() / 5),
+             background.name(),
+             tint(background, Qt::white, 0.13).name(),
+             tint(background, Qt::black, 0.22).name()));
+    setIcon(m_tool->icon(background, true));
 }
 
 const QList<CaptureTool::Type>& CaptureToolButton::getIterableButtonTypes()
@@ -92,7 +113,19 @@ const QList<CaptureTool::Type>& CaptureToolButton::getIterableButtonTypes()
 // get icon returns the icon for the type of button
 QIcon CaptureToolButton::icon() const
 {
-    return m_tool->icon(m_mainColor, true);
+    return QPushButton::icon();
+}
+
+bool CaptureToolButton::event(QEvent* e)
+{
+    if (e->type() == QEvent::ShortcutOverride && hasFocus()) {
+        const auto* key = static_cast<QKeyEvent*>(e);
+        if (key->key() == Qt::Key_Space && key->modifiers() == Qt::NoModifier) {
+            e->accept();
+            return true;
+        }
+    }
+    return CaptureButton::event(e);
 }
 
 void CaptureToolButton::mousePressEvent(QMouseEvent* e)
@@ -107,16 +140,9 @@ void CaptureToolButton::mousePressEvent(QMouseEvent* e)
     }
 }
 
-void CaptureToolButton::animatedShow()
+void CaptureToolButton::nextCheckState()
 {
-    if (!isVisible()) {
-        show();
-        m_emergeAnimation->start();
-        connect(m_emergeAnimation,
-                &QPropertyAnimation::finished,
-                this,
-                [this]() { updateIcon(); });
-    }
+    // CaptureWidget owns the selection for mouse and keyboard activation.
 }
 
 CaptureTool* CaptureToolButton::tool() const
@@ -126,12 +152,37 @@ CaptureTool* CaptureToolButton::tool() const
 
 void CaptureToolButton::setColor(const QColor& c)
 {
-    m_mainColor = c;
-    CaptureButton::setColor(c);
-    updateIcon();
+    m_color = c;
+    updateAppearance();
 }
 
-QColor CaptureToolButton::m_mainColor;
+void CaptureToolButton::setSelected(bool selected, const QColor& color)
+{
+    m_selectedColor = color;
+    setChecked(selected);
+    updateAppearance();
+}
+
+CaptureToolButton::Group CaptureToolButton::group() const
+{
+    switch (m_buttonType) {
+        case CaptureTool::TYPE_UNDO:
+        case CaptureTool::TYPE_REDO:
+            return Group::History;
+        case CaptureTool::TYPE_COPY:
+        case CaptureTool::TYPE_SAVE:
+#ifdef ENABLE_IMGUR
+        case CaptureTool::TYPE_IMAGEUPLOADER:
+#endif
+        case CaptureTool::TYPE_ACCEPT:
+        case CaptureTool::TYPE_OPEN_APP:
+        case CaptureTool::TYPE_EXIT:
+        case CaptureTool::TYPE_PIN:
+            return Group::Output;
+        default:
+            return Group::Annotation;
+    }
+}
 
 static std::map<CaptureTool::Type, int> buttonTypeOrder
 {
@@ -173,15 +224,15 @@ QList<CaptureTool::Type> CaptureToolButton::iterableButtonTypes = {
     CaptureTool::TYPE_MARKER,        CaptureTool::TYPE_TEXT,
     CaptureTool::TYPE_CIRCLECOUNT,   CaptureTool::TYPE_PIXELATE,
     CaptureTool::TYPE_INVERT,        CaptureTool::TYPE_MOVESELECTION,
+    CaptureTool::TYPE_SIZEINCREASE,  CaptureTool::TYPE_SIZEDECREASE,
     CaptureTool::TYPE_UNDO,          CaptureTool::TYPE_REDO,
     CaptureTool::TYPE_COPY,          CaptureTool::TYPE_SAVE,
-    CaptureTool::TYPE_EXIT,
+    CaptureTool::TYPE_ACCEPT,
 #ifdef ENABLE_IMGUR
     CaptureTool::TYPE_IMAGEUPLOADER,
 #endif
 #if !defined(Q_OS_MACOS)
     CaptureTool::TYPE_OPEN_APP,
 #endif
-    CaptureTool::TYPE_PIN,           CaptureTool::TYPE_SIZEINCREASE,
-    CaptureTool::TYPE_SIZEDECREASE,  CaptureTool::TYPE_ACCEPT,
+    CaptureTool::TYPE_PIN,           CaptureTool::TYPE_EXIT,
 };
