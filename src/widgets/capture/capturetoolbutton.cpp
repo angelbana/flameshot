@@ -54,7 +54,10 @@ void CaptureToolButton::initButton()
                     QRegion::Ellipse));
 
     // Set a tooltip showing a shortcut in parentheses (if there is a shortcut)
-    QString tooltip = m_tool->description();
+    const QString description = m_tool->description();
+    setAccessibleName(m_tool->name());
+    setAccessibleDescription(description);
+    QString tooltip = description;
     QString shortcut =
       ConfigHandler().shortcut(QVariant::fromValue(m_buttonType).toString());
     if (m_buttonType == CaptureTool::TYPE_COPY &&

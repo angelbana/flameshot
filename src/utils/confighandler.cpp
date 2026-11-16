@@ -771,10 +771,8 @@ QString ConfigHandler::errorMessage() const
 void ConfigHandler::ensureFileWatched() const
 {
     QFile file(m_settings.fileName());
-    if (!file.exists()) {
-        if (file.open(QFileDevice::WriteOnly)) {
-            file.close();
-        }
+    if (file.open(QFileDevice::NewOnly)) {
+        file.close();
     }
     if (m_configWatcher != nullptr && m_configWatcher->files().isEmpty() &&
         qApp != nullptr // ensures that the organization name can be accessed

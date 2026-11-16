@@ -471,7 +471,7 @@ void CaptureWidget::showxywh()
 void CaptureWidget::initHelpMessage()
 {
     QList<QPair<QString, QString>> keyMap;
-    keyMap << std::pair(tr("Mouse"), tr("Select screenshot area"));
+    keyMap << std::pair(tr("Mouse drag"), tr("Select an area"));
     using CT = CaptureTool;
     for (auto toolType : { CT::TYPE_ACCEPT, CT::TYPE_SAVE, CT::TYPE_COPY }) {
         if (!m_tools.contains(toolType)) {
@@ -487,8 +487,10 @@ void CaptureWidget::initHelpMessage()
     }
     keyMap << std::pair(tr("Mouse Wheel"), tr("Change tool size"));
     keyMap << std::pair(tr("Right Click"), tr("Show color picker"));
-    keyMap << std::pair(ConfigHandler().shortcut("TYPE_TOGGLE_PANEL"),
-                        tr("Open side panel"));
+    const QString panelShortcut = ConfigHandler().shortcut("TYPE_TOGGLE_PANEL");
+    if (!panelShortcut.isEmpty()) {
+        keyMap << std::pair(panelShortcut, tr("Open side panel"));
+    }
     keyMap << std::pair(tr("Esc"), tr("Exit"));
 
     m_helpMessage = OverlayMessage::compileFromKeyMap(keyMap);

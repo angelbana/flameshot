@@ -197,6 +197,8 @@ if(WIN32)
 
     set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/packaging/win-installer/LICENSE/GPL-3.0.txt")
     set(CPACK_RESOURCE_FILE_README "${CMAKE_SOURCE_DIR}/README.md")
+    list(APPEND CPACK_PRE_BUILD_SCRIPTS
+         "${CMAKE_SOURCE_DIR}/packaging/win-installer/check-config.cmake")
 
     set(CPACK_WIX_UPGRADE_GUID "26D8062A-66D9-48D9-8924-42090FB9B3F9")
   endif()

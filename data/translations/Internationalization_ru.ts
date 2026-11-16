@@ -209,14 +209,14 @@
         <translation type="vanished">Не удалось захватить экран</translation>
     </message>
     <message>
-        <location filename="../../src/widgets/capture/capturewidget.cpp" line="468"/>
-        <source>Mouse</source>
-        <translation>Мышь</translation>
+        <location filename="../../src/widgets/capture/capturewidget.cpp" line="474"/>
+        <source>Mouse drag</source>
+        <translation>Перетаскивание мышью</translation>
     </message>
     <message>
-        <location filename="../../src/widgets/capture/capturewidget.cpp" line="468"/>
-        <source>Select screenshot area</source>
-        <translation>Выбрать область снимка</translation>
+        <location filename="../../src/widgets/capture/capturewidget.cpp" line="474"/>
+        <source>Select an area</source>
+        <translation>Выделить область снимка</translation>
     </message>
     <message>
         <location filename="../../src/widgets/capture/capturewidget.cpp" line="482"/>
