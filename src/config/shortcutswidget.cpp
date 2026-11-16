@@ -52,7 +52,9 @@ ShortcutsWidget::ShortcutsWidget(QWidget* parent)
     initMsScreenclipCheckbox();
 #endif
 
-    show();
+    if (isWindow()) {
+        show();
+    }
 }
 
 void ShortcutsWidget::initInfoTable()
@@ -65,7 +67,11 @@ void ShortcutsWidget::initInfoTable()
     m_table->setColumnCount(2);
     m_table->setSelectionMode(QAbstractItemView::NoSelection);
     m_table->setFocusPolicy(Qt::NoFocus);
+    m_table->setAlternatingRowColors(true);
+    m_table->setShowGrid(false);
     m_table->verticalHeader()->hide();
+    m_table->verticalHeader()->setMinimumSectionSize(fontMetrics().height() +
+                                                     10);
 
     // header creation
     QStringList names;
@@ -80,8 +86,10 @@ void ShortcutsWidget::initInfoTable()
     populateInfoTable();
 
     // adjust size
-    m_table->horizontalHeader()->setMinimumSectionSize(200);
+    m_table->horizontalHeader()->setMinimumSectionSize(88);
     m_table->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
+    m_table->horizontalHeader()->setSectionResizeMode(
+      1, QHeaderView::ResizeToContents);
     m_table->horizontalHeader()->setSizePolicy(QSizePolicy::Expanding,
                                                QSizePolicy::Expanding);
     m_table->resizeColumnsToContents();

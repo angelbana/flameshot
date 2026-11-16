@@ -41,8 +41,8 @@ private:
     QComboBox* m_selectTranslation;
 
     void initWidgets();
-    void initOpacitySlider();
+    void initOpacitySlider(QVBoxLayout* layout);
     void refreshOpacity();
     void updateOpacityLabel();
-    void initTranslations();
+    void initTranslations(QVBoxLayout* layout);
 };

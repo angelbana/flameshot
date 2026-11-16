@@ -7,6 +7,7 @@
 #include <QWidget>
 
 class QVBoxLayout;
+class QFormLayout;
 class QCheckBox;
 class QPushButton;
 class QLabel;
@@ -105,7 +106,7 @@ private:
     void initUploadClientSecret();
     void initSaveLastRegion();
     void initShowSelectionGeometry();
-    void initJpegQuality(QVBoxLayout* layout);
+    void initJpegQuality(QFormLayout* layout);
     void initReverseArrow();
     void initDrawCircleCounterOutline();
     void initInsecurePixelate();

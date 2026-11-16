@@ -8,6 +8,7 @@
 #include <QComboBox>
 #include <QFile>
 #include <QFileDialog>
+#include <QFormLayout>
 #include <QGroupBox>
 #include <QImageWriter>
 #include <QLabel>
@@ -28,6 +29,7 @@ GeneralConf::GeneralConf(QWidget* parent)
   , m_undoLimit(nullptr)
 {
     m_layout = new QVBoxLayout(this);
+    m_layout->setContentsMargins(0, 0, 0, 0);
     m_layout->setAlignment(Qt::AlignTop);
 
     // Scroll area adapts the size of the content on small screens.
@@ -40,6 +42,7 @@ GeneralConf::GeneralConf(QWidget* parent)
         box->setFlat(true);
         sections->addWidget(box);
         m_scrollAreaLayout = new QVBoxLayout(box);
+        m_scrollAreaLayout->setSpacing(7);
     };
 
     initSaveAfterCopy();
@@ -64,6 +67,10 @@ GeneralConf::GeneralConf(QWidget* parent)
 #if defined(Q_OS_UNIX) && !defined(Q_OS_MACOS)
     initUseX11LegacyScreenshot();
 #endif
+    initUndoLimit();
+
+    m_scrollAreaLayout = sections;
+    initShowSelectionGeometry();
 
     startSection(tr("Clipboard"));
     initUseJpgForClipboard();
@@ -93,8 +100,6 @@ GeneralConf::GeneralConf(QWidget* parent)
     initAllowMultipleGuiInstances();
 
     m_scrollAreaLayout = sections;
-    initUndoLimit();
-    initShowSelectionGeometry();
     // this has to be at the end
     initConfigButtons();
     updateComponents();
@@ -281,16 +286,19 @@ void GeneralConf::initScrollArea()
     m_scrollArea->setWidget(content);
     m_scrollArea->setWidgetResizable(true);
     m_scrollArea->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Expanding);
-    m_scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
     content->setObjectName("content");
     m_scrollArea->setObjectName("scrollArea");
     m_scrollArea->setStyleSheet(
-      "#content, #scrollArea { background: transparent; border: 0px; }");
+      "#content, #scrollArea { background: transparent; border: 0px; }"
+      "#content QGroupBox { border: 0; border-top: 1px solid palette(mid);"
+      " margin-top: 12px; padding-top: 8px; }"
+      "#content QGroupBox::title { subcontrol-origin: margin;"
+      " subcontrol-position: top left; padding-right: 8px; }");
     m_scrollAreaLayout = new QVBoxLayout(content);
     m_scrollAreaLayout->setAlignment(Qt::AlignTop);
     m_scrollAreaLayout->setContentsMargins(0, 0, 12, 0);
-    m_scrollAreaLayout->setSpacing(12);
+    m_scrollAreaLayout->setSpacing(16);
 }
 
 void GeneralConf::initShowHelp()
@@ -538,9 +546,8 @@ void GeneralConf::initSaveAfterCopy()
 
     QString path = ConfigHandler().savePath();
     m_savePath = new QLineEdit(path, this);
-    m_savePath->setDisabled(true);
-    QString foreground = this->palette().windowText().color().name();
-    m_savePath->setStyleSheet(QStringLiteral("color: %1").arg(foreground));
+    m_savePath->setReadOnly(true);
+    m_savePath->setAccessibleName(box->title());
     pathLayout->addWidget(m_savePath);
 
     m_changeSaveButton = new QPushButton(tr("Change..."), this);
@@ -560,10 +567,6 @@ void GeneralConf::initSaveAfterCopy()
     vboxLayout->addLayout(pathLayout);
     vboxLayout->addWidget(m_screenshotPathFixedCheck);
 
-    auto* extensionLayout = new QHBoxLayout();
-
-    extensionLayout->addWidget(
-      new QLabel(tr("Preferred save file extension:")));
     m_setSaveAsFileExtension = new QComboBox(this);
     m_setSaveAsFileExtension->setPlaceholderText(tr("PNG (default)"));
 
@@ -582,10 +585,13 @@ void GeneralConf::initSaveAfterCopy()
             this,
             &GeneralConf::setSaveAsFileExtension);
 
-    extensionLayout->addWidget(m_setSaveAsFileExtension);
-    vboxLayout->addLayout(extensionLayout);
-
-    initJpegQuality(vboxLayout);
+    auto* imageFormat = new QFormLayout();
+    imageFormat->setRowWrapPolicy(QFormLayout::WrapLongRows);
+    imageFormat->setFieldGrowthPolicy(QFormLayout::FieldsStayAtSizeHint);
+    imageFormat->addRow(tr("Preferred save file extension:"),
+                        m_setSaveAsFileExtension);
+    initJpegQuality(imageFormat);
+    vboxLayout->addLayout(imageFormat);
 
     m_saveAfterCopy = new QCheckBox(tr("Save image after copy"), box);
     m_saveAfterCopy->setToolTip(
@@ -654,13 +660,6 @@ void GeneralConf::uploadHistoryMaxChanged(int max)
 
 void GeneralConf::initUndoLimit()
 {
-    auto* box = new QGroupBox(tr("Undo limit"));
-    box->setFlat(true);
-    m_scrollAreaLayout->addWidget(box);
-
-    auto* vboxLayout = new QVBoxLayout();
-    box->setLayout(vboxLayout);
-
     m_undoLimit = new QSpinBox(this);
     m_undoLimit->setMinimum(1);
     m_undoLimit->setMaximum(999);
@@ -672,7 +671,13 @@ void GeneralConf::initUndoLimit()
             this,
             &GeneralConf::undoLimit);
 
-    vboxLayout->addWidget(m_undoLimit);
+    auto* row = new QHBoxLayout();
+    auto* label = new QLabel(tr("Undo limit"));
+    label->setBuddy(m_undoLimit);
+    row->addWidget(label);
+    row->addWidget(m_undoLimit);
+    row->addStretch();
+    m_scrollAreaLayout->addLayout(row);
 }
 
 void GeneralConf::undoLimit(int limit)
@@ -803,8 +808,9 @@ void GeneralConf::initShowSelectionGeometry()
     auto* box = new QGroupBox(tr("Selection Geometry Display"));
     box->setFlat(true);
     m_scrollAreaLayout->addWidget(box);
-    auto* vboxLayout = new QVBoxLayout(box);
-    auto* tobox = new QHBoxLayout();
+    auto* fields = new QFormLayout(box);
+    fields->setRowWrapPolicy(QFormLayout::WrapLongRows);
+    fields->setFieldGrowthPolicy(QFormLayout::FieldsStayAtSizeHint);
 
     int timeout =
       ConfigHandler().value("showSelectionGeometryHideTime").toInt();
@@ -813,17 +819,12 @@ void GeneralConf::initShowSelectionGeometry()
     m_xywhTimeout->setToolTip(
       tr("Milliseconds before geometry display hides; 0 means do not hide"));
     m_xywhTimeout->setValue(timeout);
-    tobox->addWidget(m_xywhTimeout);
-    tobox->addWidget(new QLabel(tr("Set geometry display timeout (ms)")));
-
-    vboxLayout->addLayout(tobox);
+    fields->addRow(tr("Set geometry display timeout (ms)"), m_xywhTimeout);
     connect(m_xywhTimeout,
             static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged),
             this,
             &GeneralConf::setSelGeoHideTime);
 
-    auto* selGeoLayout = new QHBoxLayout();
-    selGeoLayout->addWidget(new QLabel(tr("Display Location")));
     m_selectGeometryLocation = new QComboBox(this);
 
     m_selectGeometryLocation->addItem(tr("None"), GeneralConf::xywh_none);
@@ -848,27 +849,18 @@ void GeneralConf::initShowSelectionGeometry()
       this,
       &GeneralConf::setGeometryLocation);
 
-    selGeoLayout->addWidget(m_selectGeometryLocation);
-    vboxLayout->addLayout(selGeoLayout);
+    fields->addRow(tr("Display Location"), m_selectGeometryLocation);
 }
 
-void GeneralConf::initJpegQuality(QVBoxLayout* layout)
+void GeneralConf::initJpegQuality(QFormLayout* layout)
 {
-    auto* tobox = new QHBoxLayout();
-
     int quality = ConfigHandler().value("jpegQuality").toInt();
     m_jpegQuality = new QSpinBox();
     m_jpegQuality->setRange(0, 100);
     m_jpegQuality->setToolTip(tr("Quality range of 0-100; Higher number is "
                                  "better quality and larger file size"));
     m_jpegQuality->setValue(quality);
-    auto* label = new QLabel(tr("JPEG Quality"));
-    label->setBuddy(m_jpegQuality);
-    tobox->addWidget(label);
-    tobox->addWidget(m_jpegQuality);
-    tobox->addStretch();
-
-    layout->addLayout(tobox);
+    layout->addRow(tr("JPEG Quality"), m_jpegQuality);
     connect(m_jpegQuality,
             static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged),
             this,

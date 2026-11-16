@@ -3,14 +3,11 @@
 
 #pragma once
 
-#include <QTabWidget>
+#include <QWidget>
 
-class FileNameEditor;
-class ShortcutsWidget;
-class GeneralConf;
-class QFileSystemWatcher;
-class VisualsEditor;
-class QWidget;
+class QBoxLayout;
+class QFrame;
+class QListWidget;
 
 class ConfigWindow : public QWidget
 {
@@ -22,22 +19,19 @@ signals:
     void updateChildren();
 
 protected:
-    void keyPressEvent(QKeyEvent*);
+    void changeEvent(QEvent*) override;
+    void keyPressEvent(QKeyEvent*) override;
+    void resizeEvent(QResizeEvent*) override;
 
 private:
-    QTabWidget* m_tabWidget;
+    QBoxLayout* m_layout;
+    QFrame* m_sidebar;
+    QListWidget* m_navigation;
+    int m_sidebarWidth = 0;
+    int m_navigationRowWidth = 0;
+    bool m_navigationLayoutPending = false;
 
-    FileNameEditor* m_filenameEditor;
-    QWidget* m_filenameEditorTab;
-
-    ShortcutsWidget* m_shortcuts;
-    QWidget* m_shortcutsTab;
-
-    GeneralConf* m_generalConfig;
-    QWidget* m_generalConfigTab;
-
-    VisualsEditor* m_visuals;
-    QWidget* m_visualsTab;
-
-    void initErrorIndicator(QWidget* tab, QWidget* widget);
+    void updateNavigationLayout();
+    void updateNavigationIcons();
+    void initErrorIndicator(QWidget* page, QWidget* editor);
 };

@@ -6,6 +6,7 @@
 #include "utils/confighandler.h"
 #include "utils/filenamehandler.h"
 
+#include <QGroupBox>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QLineEdit>
@@ -22,20 +23,32 @@ FileNameEditor::FileNameEditor(QWidget* parent)
 void FileNameEditor::initLayout()
 {
     m_layout = new QVBoxLayout(this);
-    auto* infoLabel = new QLabel(tr("Edit the name of your captures:"), this);
-    infoLabel->setFixedHeight(20);
-    m_layout->addWidget(infoLabel);
-    m_layout->addWidget(m_helperButtons);
-    m_layout->addWidget(new QLabel(tr("Edit:")));
-    m_layout->addWidget(m_nameEditor);
-    m_layout->addWidget(new QLabel(tr("Preview:")));
-    m_layout->addWidget(m_outputLabel);
+    m_layout->setContentsMargins(0, 0, 0, 0);
+    m_layout->setSpacing(14);
+
+    auto* pattern = new QGroupBox(tr("Filename pattern"), this);
+    auto* fields = new QVBoxLayout(pattern);
+    fields->setSpacing(8);
+    m_nameEditor->setAccessibleName(pattern->title());
+    fields->addWidget(m_nameEditor);
+    auto* preview = new QLabel(tr("Preview:"), pattern);
+    preview->setBuddy(m_outputLabel);
+    fields->addWidget(preview);
+    fields->addWidget(m_outputLabel);
 
     auto* horizLayout = new QHBoxLayout();
-    horizLayout->addWidget(m_saveButton);
+    horizLayout->addStretch();
     horizLayout->addWidget(m_resetButton);
     horizLayout->addWidget(m_clearButton);
-    m_layout->addLayout(horizLayout);
+    horizLayout->addWidget(m_saveButton);
+    fields->addLayout(horizLayout);
+    m_layout->addWidget(pattern);
+
+    auto* dateAndTime = new QGroupBox(tr("Insert date and time"), this);
+    auto* tokens = new QVBoxLayout(dateAndTime);
+    tokens->addWidget(m_helperButtons);
+    m_layout->addWidget(dateAndTime);
+    m_layout->addStretch();
 }
 
 void FileNameEditor::initWidgets()
@@ -48,14 +61,7 @@ void FileNameEditor::initWidgets()
 
     // preview
     m_outputLabel = new QLineEdit(this);
-    m_outputLabel->setDisabled(true);
-    QString foreground = this->palette().windowText().color().name();
-    m_outputLabel->setStyleSheet(QStringLiteral("color: %1").arg(foreground));
-    QPalette pal = m_outputLabel->palette();
-    QColor color =
-      pal.color(QPalette::Disabled, m_outputLabel->backgroundRole());
-    pal.setColor(QPalette::Active, m_outputLabel->backgroundRole(), color);
-    m_outputLabel->setPalette(pal);
+    m_outputLabel->setReadOnly(true);
 
     connect(m_nameEditor,
             &QLineEdit::textChanged,

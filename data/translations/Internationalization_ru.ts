@@ -648,6 +648,26 @@ Please solve them manually in the configuration file.</source>
 <context>
     <name>ConfigWindow</name>
     <message>
+        <source>Settings sections</source>
+        <translation>Разделы настроек</translation>
+    </message>
+    <message>
+        <source>Save paths, capture behavior, and clipboard.</source>
+        <translation>Сохранение файлов, параметры захвата и буфер обмена.</translation>
+    </message>
+    <message>
+        <source>Language, colors, and capture tools.</source>
+        <translation>Язык, цвета и инструменты захвата.</translation>
+    </message>
+    <message>
+        <source>Build a filename pattern and preview the result.</source>
+        <translation>Настройте шаблон имени файла и посмотрите результат.</translation>
+    </message>
+    <message>
+        <source>View and change keyboard shortcuts.</source>
+        <translation>Посмотрите и измените сочетания клавиш.</translation>
+    </message>
+    <message>
         <location filename="../../src/config/configwindow.cpp" line="39"/>
         <source>Configuration</source>
         <translation>Настройки</translation>
@@ -660,7 +680,7 @@ Please solve them manually in the configuration file.</source>
     <message>
         <location filename="../../src/config/configwindow.cpp" line="77"/>
         <source>Filename Editor</source>
-        <translation>Шаблон имён файлов</translation>
+        <translation>Имена файлов</translation>
     </message>
     <message>
         <location filename="../../src/config/configwindow.cpp" line="58"/>
@@ -785,6 +805,14 @@ Please solve them manually in the configuration file.</source>
 </context>
 <context>
     <name>FileNameEditor</name>
+    <message>
+        <source>Filename pattern</source>
+        <translation>Шаблон имени файла</translation>
+    </message>
+    <message>
+        <source>Insert date and time</source>
+        <translation>Вставить дату и время</translation>
+    </message>
     <message>
         <location filename="../../src/config/filenameeditor.cpp" line="25"/>
         <source>Edit the name of your captures:</source>
@@ -3493,6 +3521,10 @@ If on X11 enable Legacy X11 method in the General Settings</source>
 </context>
 <context>
     <name>VisualsEditor</name>
+    <message>
+        <source>Language and appearance</source>
+        <translation>Язык и оформление</translation>
+    </message>
     <message>
         <location filename="../../src/config/visualseditor.cpp" line="44"/>
         <source>Opacity of area outside selection:</source>

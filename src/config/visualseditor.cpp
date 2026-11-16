@@ -10,16 +10,19 @@
 
 #include <QCompleter>
 #include <QDirIterator>
+#include <QGroupBox>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QMessageBox>
+#include <QPushButton>
 #include <QSignalBlocker>
 
 VisualsEditor::VisualsEditor(QWidget* parent)
   : QWidget(parent)
 {
-    m_layout = new QVBoxLayout();
-    setLayout(m_layout);
+    m_layout = new QVBoxLayout(this);
+    m_layout->setContentsMargins(0, 0, 0, 0);
+    m_layout->setSpacing(14);
     initWidgets();
 }
 
@@ -30,10 +33,9 @@ void VisualsEditor::updateComponents()
     refreshOpacity();
 }
 
-void VisualsEditor::initOpacitySlider()
+void VisualsEditor::initOpacitySlider(QVBoxLayout* layout)
 {
     m_opacitySlider = new ExtendedSlider();
-    m_opacitySlider->setFocusPolicy(Qt::NoFocus);
     m_opacitySlider->setOrientation(Qt::Horizontal);
     m_opacitySlider->setRange(0, 100);
     auto* localLayout = new QHBoxLayout();
@@ -42,13 +44,14 @@ void VisualsEditor::initOpacitySlider()
     localLayout->addWidget(new QLabel(QStringLiteral("100%")));
 
     m_opacityLabel = new QLabel();
+    m_opacityLabel->setBuddy(m_opacitySlider);
     connect(m_opacitySlider, &ExtendedSlider::valueChanged, this, [this]() {
         updateOpacityLabel();
         ConfigHandler().setContrastOpacity(
           m_opacitySlider->mappedValue(0, 255));
     });
-    m_layout->addWidget(m_opacityLabel);
-    m_layout->addLayout(localLayout);
+    layout->addWidget(m_opacityLabel);
+    layout->addLayout(localLayout);
     refreshOpacity();
 }
 
@@ -68,9 +71,15 @@ void VisualsEditor::updateOpacityLabel()
 
 void VisualsEditor::initWidgets()
 {
-    initTranslations();
+    auto* appearance = new QGroupBox(tr("Language and appearance"), this);
+    auto* appearanceLayout = new QVBoxLayout(appearance);
+    appearanceLayout->setSpacing(8);
+    initTranslations(appearanceLayout);
+    initOpacitySlider(appearanceLayout);
+    m_layout->addWidget(appearance);
 
     m_tabWidget = new QTabWidget();
+    m_tabWidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Maximum);
     m_layout->addWidget(m_tabWidget);
 
     m_colorEditor = new UIcolorEditor();
@@ -86,13 +95,11 @@ void VisualsEditor::initWidgets()
     colorpickerEditorLayout->addWidget(m_colorpickerEditor);
     m_tabWidget->addTab(m_colorpickerEditorTab, tr("Colorpicker Editor"));
 
-    initOpacitySlider();
-
     auto* boxButtons = new QGroupBox();
     boxButtons->setTitle(tr("Button Selection"));
     auto* listLayout = new QVBoxLayout(boxButtons);
     m_buttonList = new ButtonListView();
-    m_layout->addWidget(boxButtons);
+    m_layout->addWidget(boxButtons, 1);
     listLayout->addWidget(m_buttonList);
 
     auto* setAllButtons = new QPushButton(tr("Select All"));
@@ -100,14 +107,19 @@ void VisualsEditor::initWidgets()
             &QPushButton::clicked,
             m_buttonList,
             &ButtonListView::selectAll);
-    listLayout->addWidget(setAllButtons);
+    listLayout->addWidget(setAllButtons, 0, Qt::AlignRight);
 }
 
-void VisualsEditor::initTranslations()
+void VisualsEditor::initTranslations(QVBoxLayout* layout)
 {
     auto* localLayout = new QHBoxLayout();
-    localLayout->addWidget(new QLabel(tr("UI language")));
+    auto* label = new QLabel(tr("UI language"));
+    localLayout->addWidget(label);
     m_selectTranslation = new QComboBox(this);
+    label->setBuddy(m_selectTranslation);
+    m_selectTranslation->setMinimumContentsLength(12);
+    m_selectTranslation->setSizeAdjustPolicy(
+      QComboBox::AdjustToMinimumContentsLengthWithIcon);
     // The translation list is long enough to overflow the screen as a
     // plain dropdown, so make it editable with a filtering completer -
     // typing narrows the popup instead of showing every item at once.
@@ -166,5 +178,5 @@ void VisualsEditor::initTranslations()
 
     localLayout->addWidget(m_selectTranslation);
     localLayout->addStretch();
-    m_layout->addLayout(localLayout);
+    layout->addLayout(localLayout);
 }

@@ -38,11 +38,6 @@ ImgUploaderBase::ImgUploaderBase(const QPixmap& capture, QWidget* parent)
     setWindowTitle(tr("Upload image"));
     setWindowIcon(QIcon(GlobalValues::iconPath()));
 
-    QRect position = frameGeometry();
-    QScreen* screen = QGuiApplication::screenAt(QCursor::pos());
-    position.moveCenter(screen->availableGeometry().center());
-    move(position.topLeft());
-
     m_spinner = new LoadSpinner(this);
     m_spinner->setColor(ConfigHandler().uiColor());
     m_spinner->start();
@@ -57,6 +52,21 @@ ImgUploaderBase::ImgUploaderBase(const QPixmap& capture, QWidget* parent)
     setLayout(m_vLayout);
     m_vLayout->addWidget(m_spinner, 0, Qt::AlignHCenter);
     m_vLayout->addWidget(m_infoLabel);
+
+    const QSize preferred(456, qMax(188, sizeHint().height()));
+    const QScreen* screen = QGuiApplication::screenAt(QCursor::pos());
+    if (!screen) {
+        screen = QGuiApplication::primaryScreen();
+    }
+    if (screen) {
+        const QRect available = screen->availableGeometry();
+        resize(preferred.boundedTo(available.size() - QSize(24, 48)));
+        QRect position(QPoint(), size());
+        position.moveCenter(available.center());
+        move(position.topLeft());
+    } else {
+        resize(preferred);
+    }
 
     setAttribute(Qt::WA_DeleteOnClose);
 }

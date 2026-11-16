@@ -4,14 +4,11 @@
 #pragma once
 
 #include "QtColorWidgets/color_wheel.hpp"
-#include "widgets/capture/capturetoolbutton.h"
-
-#include <QGroupBox>
+#include <QWidget>
 
 class QVBoxLayout;
 class QHBoxLayout;
-class CaptureToolButton;
-class ClickableLabel;
+class QPushButton;
 class QLineEdit;
 class QLabel;
 
@@ -27,21 +24,17 @@ public slots:
 private slots:
     void updateUIcolor();
     void updateLocalColor(const QColor);
-    void changeLastButton(CaptureToolButton*);
+    void changeLastButton(QPushButton*);
     void changeInputColor(const QString&);
 
 private:
     QColor m_uiColor, m_contrastColor;
-    CaptureToolButton* m_buttonMainColor;
-    ClickableLabel* m_labelMain;
-    CaptureToolButton* m_buttonContrast;
-    ClickableLabel* m_labelContrast;
-    CaptureToolButton* m_lastButtonPressed;
+    QPushButton* m_buttonMainColor;
+    QPushButton* m_buttonContrast;
+    QPushButton* m_lastButtonPressed;
     color_widgets::ColorWheel* m_colorWheel;
     QLineEdit* m_hexColorEdit;
     QLabel* m_hexColorLabel;
-
-    static const CaptureTool::Type m_buttonIconType = CaptureTool::TYPE_CIRCLE;
 
     QHBoxLayout* m_hLayout;
     QVBoxLayout* m_vLayout;
