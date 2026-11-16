@@ -105,7 +105,7 @@ private:
     void initUploadClientSecret();
     void initSaveLastRegion();
     void initShowSelectionGeometry();
-    void initJpegQuality();
+    void initJpegQuality(QVBoxLayout* layout);
     void initReverseArrow();
     void initDrawCircleCounterOutline();
     void initInsecurePixelate();

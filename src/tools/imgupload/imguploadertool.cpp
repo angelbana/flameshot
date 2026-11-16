@@ -20,7 +20,7 @@ QIcon ImgUploaderTool::icon(const QColor& background, bool inEditor) const
 
 QString ImgUploaderTool::name() const
 {
-    return tr("Image Uploader");
+    return tr("Upload to Imgur");
 }
 
 CaptureTool::Type ImgUploaderTool::type() const
@@ -30,7 +30,7 @@ CaptureTool::Type ImgUploaderTool::type() const
 
 QString ImgUploaderTool::description() const
 {
-    return tr("Upload the selection");
+    return tr("Upload the selection to Imgur");
 }
 
 CaptureTool* ImgUploaderTool::copy(QObject* parent)

@@ -13,6 +13,7 @@
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QMessageBox>
+#include <QSignalBlocker>
 
 VisualsEditor::VisualsEditor(QWidget* parent)
   : QWidget(parent)
@@ -26,8 +27,7 @@ void VisualsEditor::updateComponents()
 {
     m_buttonList->updateComponents();
     m_colorEditor->updateComponents();
-    int opacity = ConfigHandler().contrastOpacity();
-    m_opacitySlider->setMapedValue(0, opacity, 255);
+    refreshOpacity();
 }
 
 void VisualsEditor::initOpacitySlider()
@@ -41,22 +41,29 @@ void VisualsEditor::initOpacitySlider()
     localLayout->addWidget(m_opacitySlider);
     localLayout->addWidget(new QLabel(QStringLiteral("100%")));
 
-    auto* label = new QLabel();
-    QString labelMsg = tr("Opacity of area outside selection:") + " %1%";
-    ExtendedSlider* opacitySlider = m_opacitySlider;
-    connect(m_opacitySlider,
-            &ExtendedSlider::valueChanged,
-            this,
-            [labelMsg, label, opacitySlider](int val) {
-                label->setText(labelMsg.arg(val));
-                ConfigHandler().setContrastOpacity(
-                  opacitySlider->mappedValue(0, 255));
-            });
-    m_layout->addWidget(label);
+    m_opacityLabel = new QLabel();
+    connect(m_opacitySlider, &ExtendedSlider::valueChanged, this, [this]() {
+        updateOpacityLabel();
+        ConfigHandler().setContrastOpacity(
+          m_opacitySlider->mappedValue(0, 255));
+    });
+    m_layout->addWidget(m_opacityLabel);
     m_layout->addLayout(localLayout);
+    refreshOpacity();
+}
 
-    int opacity = ConfigHandler().contrastOpacity();
-    m_opacitySlider->setMapedValue(0, opacity, 255);
+void VisualsEditor::refreshOpacity()
+{
+    const QSignalBlocker blocker(m_opacitySlider);
+    m_opacitySlider->setMapedValue(0, ConfigHandler().contrastOpacity(), 255);
+    updateOpacityLabel();
+}
+
+void VisualsEditor::updateOpacityLabel()
+{
+    m_opacityLabel->setText(
+      (tr("Opacity of area outside selection:") + QStringLiteral(" %1%"))
+        .arg(m_opacitySlider->value()));
 }
 
 void VisualsEditor::initWidgets()

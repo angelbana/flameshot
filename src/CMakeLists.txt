@@ -424,8 +424,9 @@ if (WIN32)
                 POST_BUILD
                 COMMAND ${CMAKE_COMMAND} -E remove_directory ${CMAKE_BINARY_DIR}/windeployqt_stuff
                 COMMAND
-                ${WINDEPLOYQT_EXE} ${BINARIES_TYPE} --no-translations --compiler-runtime --no-system-d3d-compiler
-                --no-quick-import --dir ${CMAKE_BINARY_DIR}/windeployqt_stuff $<TARGET_FILE:flameshot>
+                ${WINDEPLOYQT_EXE} ${BINARIES_TYPE} --compiler-runtime --no-system-d3d-compiler
+                --no-quick-import --dir ${CMAKE_BINARY_DIR}/windeployqt_stuff
+                --translationdir ${CMAKE_BINARY_DIR}/windeployqt_stuff/translations $<TARGET_FILE:flameshot>
                 # copy translations manually QM_FILES
                 COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/windeployqt_stuff/translations
                 COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_BINARY_DIR}/src/translations

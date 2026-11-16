@@ -15,6 +15,7 @@
 #include <QMessageBox>
 #include <QPushButton>
 #include <QSettings>
+#include <QSignalBlocker>
 #include <QSizePolicy>
 #include <QSpinBox>
 #include <QStandardPaths>
@@ -33,6 +34,52 @@ GeneralConf::GeneralConf(QWidget* parent)
     // It must be initialized before the checkboxes.
     initScrollArea();
 
+    auto* const sections = m_scrollAreaLayout;
+    const auto startSection = [this, sections](const QString& title) {
+        auto* box = new QGroupBox(title);
+        box->setFlat(true);
+        sections->addWidget(box);
+        m_scrollAreaLayout = new QVBoxLayout(box);
+    };
+
+    initSaveAfterCopy();
+
+    startSection(tr("Capture and editing"));
+    initSaveLastRegion();
+    initShowHelp();
+    initShowSidePanelButton();
+    initShowMagnifier();
+    initSquareMagnifier();
+    initPredefinedColorPaletteLarge();
+    initReverseArrow();
+    initDrawCircleCounterOutline();
+    initInsecurePixelate();
+    initAntialiasingPinZoom();
+#if !defined(Q_OS_MACOS)
+    initCaptureActiveMonitor();
+#endif
+#if defined(Q_OS_MACOS)
+    initUseNativeFullscreen();
+#endif
+#if defined(Q_OS_UNIX) && !defined(Q_OS_MACOS)
+    initUseX11LegacyScreenshot();
+#endif
+
+    startSection(tr("Clipboard"));
+    initUseJpgForClipboard();
+    initCopyOnDoubleClick();
+    initCopyPathAfterSave();
+
+#ifdef ENABLE_IMGUR
+    startSection(tr("Imgur uploads"));
+    initCopyAndCloseAfterUpload();
+    initUploadWithoutConfirmation();
+    initHistoryConfirmationToDelete();
+    initUploadHistoryMax();
+    initUploadClientSecret();
+#endif
+
+    startSection(tr("Startup and notifications"));
     initAutostart();
     initAutoCloseIdleDaemon();
     initShowTrayIcon();
@@ -44,42 +91,10 @@ GeneralConf::GeneralConf(QWidget* parent)
     initShowStartupLaunchMessage();
     initShowQuitPrompt();
     initAllowMultipleGuiInstances();
-    initSaveLastRegion();
-    initShowHelp();
-    initShowSidePanelButton();
-    initUseJpgForClipboard();
-    initCopyOnDoubleClick();
-    initSaveAfterCopy();
-    initCopyPathAfterSave();
-    initAntialiasingPinZoom();
+
+    m_scrollAreaLayout = sections;
     initUndoLimit();
-    initInsecurePixelate();
-#if !defined(Q_OS_MACOS)
-    initCaptureActiveMonitor();
-#endif
-#if defined(Q_OS_MACOS)
-    initUseNativeFullscreen();
-#endif
-#if defined(Q_OS_UNIX) && !defined(Q_OS_MACOS)
-    initUseX11LegacyScreenshot();
-#endif
-#ifdef ENABLE_IMGUR
-    initCopyAndCloseAfterUpload();
-    initUploadWithoutConfirmation();
-    initHistoryConfirmationToDelete();
-    initUploadHistoryMax();
-    initUploadClientSecret();
-#endif
-    initPredefinedColorPaletteLarge();
     initShowSelectionGeometry();
-
-    m_layout->addStretch();
-
-    initShowMagnifier();
-    initSquareMagnifier();
-    initJpegQuality();
-    initReverseArrow();
-    initDrawCircleCounterOutline();
     // this has to be at the end
     initConfigButtons();
     updateComponents();
@@ -88,6 +103,8 @@ GeneralConf::GeneralConf(QWidget* parent)
 void GeneralConf::_updateComponents(bool allowEmptySavePath)
 {
     ConfigHandler config;
+    const QSignalBlocker blockUndoLimit(m_undoLimit);
+    const QSignalBlocker blockFixedPath(m_screenshotPathFixedCheck);
     m_helpMessage->setChecked(config.showHelp());
     m_sidePanelButton->setChecked(config.showSidePanelButton());
     m_sysNotifications->setChecked(config.showDesktopNotification());
@@ -99,6 +116,7 @@ void GeneralConf::_updateComponents(bool allowEmptySavePath)
     m_useJpgForClipboard->setChecked(config.useJpgForClipboard());
     m_copyOnDoubleClick->setChecked(config.copyOnDoubleClick());
 #ifdef ENABLE_IMGUR
+    const QSignalBlocker blockUploadHistory(m_uploadHistoryMax);
     m_uploadWithoutConfirmation->setChecked(config.uploadWithoutConfirmation());
     m_copyURLAfterUpload->setChecked(config.copyURLAfterUpload());
     m_historyConfirmationToDelete->setChecked(
@@ -271,7 +289,8 @@ void GeneralConf::initScrollArea()
       "#content, #scrollArea { background: transparent; border: 0px; }");
     m_scrollAreaLayout = new QVBoxLayout(content);
     m_scrollAreaLayout->setAlignment(Qt::AlignTop);
-    m_scrollAreaLayout->setContentsMargins(0, 0, 20, 0);
+    m_scrollAreaLayout->setContentsMargins(0, 0, 12, 0);
+    m_scrollAreaLayout->setSpacing(12);
 }
 
 void GeneralConf::initShowHelp()
@@ -368,7 +387,7 @@ void GeneralConf::initConfigButtons()
     auto* box = new QGroupBox(tr("Configuration File"));
     box->setFlat(true);
     box->setLayout(buttonLayout);
-    m_layout->addWidget(box);
+    m_scrollAreaLayout->addWidget(box);
 
     m_exportButton = new QPushButton(tr("Export"));
     buttonLayout->addWidget(m_exportButton);
@@ -510,21 +529,10 @@ void GeneralConf::initCopyAndCloseAfterUpload()
 
 void GeneralConf::initSaveAfterCopy()
 {
-    m_saveAfterCopy = new QCheckBox(tr("Save image after copy"), this);
-    m_saveAfterCopy->setToolTip(
-      tr("After copying the screenshot, save it to a file as well"));
-    m_scrollAreaLayout->addWidget(m_saveAfterCopy);
-    connect(m_saveAfterCopy,
-            &QCheckBox::clicked,
-            this,
-            &GeneralConf::saveAfterCopyChanged);
-
     auto* box = new QGroupBox(tr("Save Path"));
     box->setFlat(true);
-    m_layout->addWidget(box);
-
-    auto* vboxLayout = new QVBoxLayout();
-    box->setLayout(vboxLayout);
+    m_scrollAreaLayout->addWidget(box);
+    auto* vboxLayout = new QVBoxLayout(box);
 
     auto* pathLayout = new QHBoxLayout();
 
@@ -557,6 +565,7 @@ void GeneralConf::initSaveAfterCopy()
     extensionLayout->addWidget(
       new QLabel(tr("Preferred save file extension:")));
     m_setSaveAsFileExtension = new QComboBox(this);
+    m_setSaveAsFileExtension->setPlaceholderText(tr("PNG (default)"));
 
     QStringList imageFormatList;
     for (const auto& mimeType : QImageWriter::supportedImageFormats())
@@ -575,6 +584,17 @@ void GeneralConf::initSaveAfterCopy()
 
     extensionLayout->addWidget(m_setSaveAsFileExtension);
     vboxLayout->addLayout(extensionLayout);
+
+    initJpegQuality(vboxLayout);
+
+    m_saveAfterCopy = new QCheckBox(tr("Save image after copy"), box);
+    m_saveAfterCopy->setToolTip(
+      tr("After copying the screenshot, save it to a file as well"));
+    vboxLayout->addWidget(m_saveAfterCopy);
+    connect(m_saveAfterCopy,
+            &QCheckBox::clicked,
+            this,
+            &GeneralConf::saveAfterCopyChanged);
 }
 
 void GeneralConf::historyConfirmationToDelete(bool checked)
@@ -584,13 +604,7 @@ void GeneralConf::historyConfirmationToDelete(bool checked)
 
 void GeneralConf::initUploadHistoryMax()
 {
-    auto* box = new QGroupBox(tr("Latest Uploads Max Size"));
-    box->setFlat(true);
-    m_layout->addWidget(box);
-
-    auto* vboxLayout = new QVBoxLayout();
-    box->setLayout(vboxLayout);
-
+    auto* row = new QHBoxLayout();
     m_uploadHistoryMax = new QSpinBox(this);
     m_uploadHistoryMax->setMaximum(50);
     QString foreground = this->palette().windowText().color().name();
@@ -601,18 +615,17 @@ void GeneralConf::initUploadHistoryMax()
             static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged),
             this,
             &GeneralConf::uploadHistoryMaxChanged);
-    vboxLayout->addWidget(m_uploadHistoryMax);
+    auto* label = new QLabel(tr("Latest Uploads Max Size"));
+    label->setBuddy(m_uploadHistoryMax);
+    row->addWidget(label);
+    row->addWidget(m_uploadHistoryMax);
+    row->addStretch();
+    m_scrollAreaLayout->addLayout(row);
 }
 
 void GeneralConf::initUploadClientSecret()
 {
-    auto* box = new QGroupBox(tr("Imgur Application Client ID"));
-    box->setFlat(true);
-    m_layout->addWidget(box);
-
-    auto* vboxLayout = new QVBoxLayout();
-    box->setLayout(vboxLayout);
-
+    auto* row = new QHBoxLayout();
     m_uploadClientKey = new QLineEdit(this);
     QString foreground = this->palette().windowText().color().name();
     m_uploadClientKey->setStyleSheet(
@@ -622,7 +635,11 @@ void GeneralConf::initUploadClientSecret()
             &QLineEdit::editingFinished,
             this,
             &GeneralConf::uploadClientKeyEdited);
-    vboxLayout->addWidget(m_uploadClientKey);
+    auto* label = new QLabel(tr("Imgur Application Client ID"));
+    label->setBuddy(m_uploadClientKey);
+    row->addWidget(label);
+    row->addWidget(m_uploadClientKey, 1);
+    m_scrollAreaLayout->addLayout(row);
 }
 
 void GeneralConf::uploadClientKeyEdited()
@@ -639,7 +656,7 @@ void GeneralConf::initUndoLimit()
 {
     auto* box = new QGroupBox(tr("Undo limit"));
     box->setFlat(true);
-    m_layout->addWidget(box);
+    m_scrollAreaLayout->addWidget(box);
 
     auto* vboxLayout = new QVBoxLayout();
     box->setLayout(vboxLayout);
@@ -783,6 +800,10 @@ void GeneralConf::initSquareMagnifier()
 
 void GeneralConf::initShowSelectionGeometry()
 {
+    auto* box = new QGroupBox(tr("Selection Geometry Display"));
+    box->setFlat(true);
+    m_scrollAreaLayout->addWidget(box);
+    auto* vboxLayout = new QVBoxLayout(box);
     auto* tobox = new QHBoxLayout();
 
     int timeout =
@@ -795,18 +816,12 @@ void GeneralConf::initShowSelectionGeometry()
     tobox->addWidget(m_xywhTimeout);
     tobox->addWidget(new QLabel(tr("Set geometry display timeout (ms)")));
 
-    m_scrollAreaLayout->addLayout(tobox);
+    vboxLayout->addLayout(tobox);
     connect(m_xywhTimeout,
             static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged),
             this,
             &GeneralConf::setSelGeoHideTime);
 
-    auto* box = new QGroupBox(tr("Selection Geometry Display"));
-    box->setFlat(true);
-    m_layout->addWidget(box);
-
-    auto* vboxLayout = new QVBoxLayout();
-    box->setLayout(vboxLayout);
     auto* selGeoLayout = new QHBoxLayout();
     selGeoLayout->addWidget(new QLabel(tr("Display Location")));
     m_selectGeometryLocation = new QComboBox(this);
@@ -835,10 +850,9 @@ void GeneralConf::initShowSelectionGeometry()
 
     selGeoLayout->addWidget(m_selectGeometryLocation);
     vboxLayout->addLayout(selGeoLayout);
-    vboxLayout->addStretch();
 }
 
-void GeneralConf::initJpegQuality()
+void GeneralConf::initJpegQuality(QVBoxLayout* layout)
 {
     auto* tobox = new QHBoxLayout();
 
@@ -848,10 +862,13 @@ void GeneralConf::initJpegQuality()
     m_jpegQuality->setToolTip(tr("Quality range of 0-100; Higher number is "
                                  "better quality and larger file size"));
     m_jpegQuality->setValue(quality);
+    auto* label = new QLabel(tr("JPEG Quality"));
+    label->setBuddy(m_jpegQuality);
+    tobox->addWidget(label);
     tobox->addWidget(m_jpegQuality);
-    tobox->addWidget(new QLabel(tr("JPEG Quality")));
+    tobox->addStretch();
 
-    m_scrollAreaLayout->addLayout(tobox);
+    layout->addLayout(tobox);
     connect(m_jpegQuality,
             static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged),
             this,

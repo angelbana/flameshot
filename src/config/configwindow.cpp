@@ -31,7 +31,7 @@ ConfigWindow::ConfigWindow(QWidget* parent)
     // We wrap QTabWidget in a QWidget because of a Qt bug
     auto* layout = new QVBoxLayout(this);
     m_tabWidget = new QTabWidget(this);
-    m_tabWidget->tabBar()->setUsesScrollButtons(false);
+    m_tabWidget->tabBar()->setUsesScrollButtons(true);
 #if defined(Q_OS_MACOS)
     // Fix Qt6 macOS bug where tab pane content renders behind the tab bar
     m_tabWidget->setStyleSheet(

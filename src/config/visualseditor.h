@@ -8,6 +8,7 @@
 #include <QWidget>
 
 class ExtendedSlider;
+class QLabel;
 class QVBoxLayout;
 class ButtonListView;
 class UIcolorEditor;
@@ -35,10 +36,13 @@ private:
 
     ButtonListView* m_buttonList;
     ExtendedSlider* m_opacitySlider;
+    QLabel* m_opacityLabel;
 
     QComboBox* m_selectTranslation;
 
     void initWidgets();
     void initOpacitySlider();
+    void refreshOpacity();
+    void updateOpacityLabel();
     void initTranslations();
 };

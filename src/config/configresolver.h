@@ -6,6 +6,8 @@ class QGridLayout;
 
 class ConfigResolver : public QDialog
 {
+    Q_OBJECT
+
 public:
     ConfigResolver(QWidget* parent = nullptr);
 

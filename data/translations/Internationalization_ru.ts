@@ -96,6 +96,18 @@
         <source>Set the Arrow as the paint tool</source>
         <translation>Выбрать инструмент «Стрелка»</translation>
     </message>
+    <message>
+        <source>Arrow style:</source>
+        <translation>Стиль стрелки:</translation>
+    </message>
+    <message>
+        <source>Default</source>
+        <translation>Обычная</translation>
+    </message>
+    <message>
+        <source>Curved</source>
+        <translation>Изогнутая</translation>
+    </message>
 </context>
 <context>
     <name>BlurTool</name>
@@ -613,6 +625,14 @@ Please solve them manually in the configuration file.</source>
         <source>Details</source>
         <translation>Подробности</translation>
     </message>
+    <message>
+        <source>This setting has a bad value.</source>
+        <translation>У параметра недопустимое значение.</translation>
+    </message>
+    <message>
+        <source>This setting is unrecognized.</source>
+        <translation>Неизвестный параметр.</translation>
+    </message>
 </context>
 <context>
     <name>ConfigWindow</name>
@@ -986,6 +1006,26 @@ Please solve them manually in the configuration file.</source>
 </context>
 <context>
     <name>GeneralConf</name>
+    <message>
+        <source>PNG (default)</source>
+        <translation>PNG (по умолчанию)</translation>
+    </message>
+    <message>
+        <source>Capture and editing</source>
+        <translation>Захват и редактирование</translation>
+    </message>
+    <message>
+        <source>Clipboard</source>
+        <translation>Буфер обмена</translation>
+    </message>
+    <message>
+        <source>Imgur uploads</source>
+        <translation>Загрузка в Imgur</translation>
+    </message>
+    <message>
+        <source>Startup and notifications</source>
+        <translation>Запуск и уведомления</translation>
+    </message>
     <message>
         <location filename="../../src/config/generalconf.cpp" line="195"/>
         <location filename="../../src/config/generalconf.cpp" line="379"/>
@@ -1468,6 +1508,38 @@ Please solve them manually in the configuration file.</source>
         <source>Bypass the freedesktop portal and use Qt&apos;s native X11 screen capture. Enable this if your window manager lacks xdg-desktop-portal (e.g. xmonad, i3). Only effective on X11; ignored on Wayland.</source>
         <translation>Обходить Freedesktop Portal и использовать родной захват Qt для X11. Включите, если у вашего оконного менеджера нет xdg-desktop-portal (напр., xmonad, i3). Работает только в X11; игнорируется в Wayland.</translation>
     </message>
+    <message>
+        <source>Close flameshot when idle</source>
+        <translation>Закрывать Flameshot при бездействии</translation>
+    </message>
+    <message>
+        <source>Draw outline around circle counter</source>
+        <translation>Обводить номер в кружке</translation>
+    </message>
+    <message>
+        <source>Draw a contrasting ring around the counter bubble so it stays visible on any background</source>
+        <translation>Добавить контрастную обводку, чтобы номер был виден на любом фоне</translation>
+    </message>
+    <message>
+        <source>Capture active monitor in X11 and Windows (skip monitor selection)</source>
+        <translation>Снимать активный монитор без выбора (X11 и Windows)</translation>
+    </message>
+    <message>
+        <source>Automatically capture the monitor where the cursor is located instead of showing the monitor selection dialog. This feature is not supported on macOS and Wayland.</source>
+        <translation>Снимать монитор, на котором находится курсор, без открытия окна выбора. Доступно в X11 и Windows.</translation>
+    </message>
+    <message>
+        <source>Use native fullscreen for capture overlay</source>
+        <translation>Открывать оверлей захвата в полноэкранном режиме macOS</translation>
+    </message>
+    <message>
+        <source>Use macOS native fullscreen mode for the capture overlay. When disabled (default), the overlay avoids the fullscreen desktop animation.</source>
+        <translation>Использовать полноэкранный режим macOS для оверлея захвата. По умолчанию оверлей открывается без полноэкранной анимации.</translation>
+    </message>
+    <message>
+        <source>Use legacy X11 screenshot method</source>
+        <translation>Использовать прямой захват в X11</translation>
+    </message>
 </context>
 <context>
     <name>HistoryWidget</name>
@@ -1719,13 +1791,13 @@ Please solve them manually in the configuration file.</source>
     </message>
     <message>
         <location filename="../../src/tools/imgupload/imguploadertool.cpp" line="23"/>
-        <source>Image Uploader</source>
-        <translation>Отправщик изображений</translation>
+        <source>Upload to Imgur</source>
+        <translation>Загрузить в Imgur</translation>
     </message>
     <message>
         <location filename="../../src/tools/imgupload/imguploadertool.cpp" line="33"/>
-        <source>Upload the selection</source>
-        <translation>Отправить выделенное</translation>
+        <source>Upload the selection to Imgur</source>
+        <translation>Загрузить выделенную область в Imgur</translation>
     </message>
 </context>
 <context>
@@ -1949,6 +2021,12 @@ Please solve them manually in the configuration file.</source>
 Click to select</source>
         <translation>Монитор %1: %2
 Нажмите, чтобы выбрать</translation>
+    </message>
+    <message>
+        <source>Monitor %1: %2
+Click or press %1 to select</source>
+        <translation>Монитор %1: %2
+Нажмите на монитор или клавишу %1, чтобы выбрать его</translation>
     </message>
 </context>
 <context>
@@ -2670,6 +2748,22 @@ You can find me in the system tray.</source>
         <source>Scaling screenshot to: %1 %2</source>
         <translation>Масштабирование снимка экрана до: %1 %2</translation>
     </message>
+    <message>
+        <source>The `org.freedesktop.portal.Screenshot` request failed: %1</source>
+        <translation>Не удалось выполнить запрос к org.freedesktop.portal.Screenshot: %1</translation>
+    </message>
+    <message>
+        <source>The xdg-desktop-portal backend did not respond If you are on wayland make sure an xdg-desktop-portal backend for your desktop is installed and properly configured.
+&#32;
+If on X11 enable Legacy X11 method in the General Settings</source>
+        <translation>Служба xdg-desktop-portal не ответила. В Wayland проверьте, установлен ли и настроен ли портал для вашей среды рабочего стола.
+&#32;
+В X11 включите прямой захват в общих настройках.</translation>
+    </message>
+    <message>
+        <source>Screenshot portal unavailable, using direct X11 capture</source>
+        <translation>Портал снимков недоступен. Используется прямой захват в X11</translation>
+    </message>
 </context>
 <context>
     <name>SecondaryInstanceWidget</name>
@@ -2916,6 +3010,10 @@ You can find me in the system tray.</source>
         <source>Screenshot history</source>
         <translation>История снимков</translation>
     </message>
+    <message>
+        <source>Close Active Pinned Window</source>
+        <translation>Закрыть активный закреплённый снимок</translation>
+    </message>
 </context>
 <context>
     <name>SidePanelWidget</name>
@@ -2997,91 +3095,91 @@ You can find me in the system tray.</source>
     <name>StrftimeChooserWidget</name>
     <message>
         <source>Century (00-99)</source>
-        <translation type="vanished">Век (00-99)</translation>
+        <translation>Век (00–99)</translation>
     </message>
     <message>
         <source>Year (00-99)</source>
-        <translation type="vanished">Год (00-99)</translation>
+        <translation>Год (00-99)</translation>
     </message>
     <message>
         <source>Year (2000)</source>
-        <translation type="vanished">Год (2000)</translation>
+        <translation>Год (2000)</translation>
     </message>
     <message>
         <source>Month Name (jan)</source>
-        <translation type="vanished">Название месяца (янв)</translation>
+        <translation>Название месяца (янв)</translation>
     </message>
     <message>
         <source>Month Name (january)</source>
-        <translation type="vanished">Название месяца (январь)</translation>
+        <translation>Название месяца (январь)</translation>
     </message>
     <message>
         <source>Month (01-12)</source>
-        <translation type="vanished">Месяц (01-12)</translation>
+        <translation>Месяц (01-12)</translation>
     </message>
     <message>
         <source>Week Day (1-7)</source>
-        <translation type="vanished">День недели (1-7)</translation>
+        <translation>День недели (1-7)</translation>
     </message>
     <message>
         <source>Week (01-53)</source>
-        <translation type="vanished">Неделя (01-53)</translation>
+        <translation>Неделя (01-53)</translation>
     </message>
     <message>
         <source>Day Name (mon)</source>
-        <translation type="vanished">День недели (пн)</translation>
+        <translation>День недели (пн)</translation>
     </message>
     <message>
         <source>Day Name (monday)</source>
-        <translation type="vanished">День недели (понедельник)</translation>
+        <translation>День недели (понедельник)</translation>
     </message>
     <message>
         <source>Day (01-31)</source>
-        <translation type="vanished">День (01-31)</translation>
+        <translation>День (01-31)</translation>
     </message>
     <message>
         <source>Day of Month (1-31)</source>
-        <translation type="vanished">День месяца (1-31)</translation>
+        <translation>День месяца (1-31)</translation>
     </message>
     <message>
         <source>Day (001-366)</source>
-        <translation type="vanished">День (001-366)</translation>
+        <translation>День (001-366)</translation>
     </message>
     <message>
         <source>Time (%H-%M-%S)</source>
-        <translation type="vanished">Время (%H-%M-%S)</translation>
+        <translation>Время (%H-%M-%S)</translation>
     </message>
     <message>
         <source>Time (%H-%M)</source>
-        <translation type="vanished">Время (%H-%M)</translation>
+        <translation>Время (%H-%M)</translation>
     </message>
     <message>
         <source>Hour (00-23)</source>
-        <translation type="vanished">Час (00-23)</translation>
+        <translation>Час (00-23)</translation>
     </message>
     <message>
         <source>Hour (01-12)</source>
-        <translation type="vanished">Час (01-12)</translation>
+        <translation>Час (01-12)</translation>
     </message>
     <message>
         <source>Minute (00-59)</source>
-        <translation type="vanished">Минуты (00-59)</translation>
+        <translation>Минуты (00-59)</translation>
     </message>
     <message>
         <source>Second (00-59)</source>
-        <translation type="vanished">Секунды (00-59)</translation>
+        <translation>Секунды (00-59)</translation>
     </message>
     <message>
         <source>Full Date (%m/%d/%y)</source>
-        <translation type="vanished">Полная дата (%m/%d/%y)</translation>
+        <translation>Полная дата (%m/%d/%y)</translation>
     </message>
     <message>
         <source>Full Date (%Y-%m-%d)</source>
-        <translation type="vanished">Полная дата (%Y-%m-%d)</translation>
+        <translation>Полная дата (%Y-%m-%d)</translation>
     </message>
     <message>
         <source>Full Date (%d-%m-%Y)</source>
-        <translation type="vanished">Полная дата (%d-%m-%Y)</translation>
+        <translation>Полная дата (%d-%m-%Y)</translation>
     </message>
 </context>
 <context>
@@ -3246,6 +3344,14 @@ You can find me in the system tray.</source>
         <location filename="../../src/config/uicoloreditor.cpp" line="130"/>
         <source>Click on this button to set the edition mode of the contrast color.</source>
         <translation>Нажмите на эту кнопку, чтобы перейти в режим правки контрастного цвета.</translation>
+    </message>
+    <message>
+        <source>Hex for Main Color</source>
+        <translation>HEX-код основного цвета</translation>
+    </message>
+    <message>
+        <source>Hex for Contrast Color</source>
+        <translation>HEX-код контрастного цвета</translation>
     </message>
 </context>
 <context>
